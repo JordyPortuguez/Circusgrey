@@ -1,1 +1,53 @@
+DECLARE @FechaInicial AS DATETIME 
+DECLARE @FechaFinal AS DATETIME 
+ 
+SELECT @FechaInicial = T0.F_RefDate, @FechaFinal = T0.T_RefDate From OFPR T0 Where T0.F_RefDate = '[%0]' AND T0.T_RefDate = '[%1]' 
 
+SET @FechaInicial = CONVERT(DATETIME, '[%0]', 112) 
+SET @FechaFinal = CONVERT(DATETIME, '[%1]', 112)
+
+(
+SELECT
+AC.UpdateDate ,
+CASE AC.CardType WHEN 'S' THEN 'PROVEEDOR' WHEN 'C' THEN 'CLIENTE' ELSE '' END 'TIPO'
+,AC.CardCode  AS CodigoSN
+,AC.CardName  AS NombreSN
+,'ACTUALIZACIÓN' AS TipoOperación
+,OU.USER_CODE AS Codigo
+,OU.U_NAME AS Usuario
+,AC.CreateDate AS "Fecha de Creación"
+ FROM ACRD AC
+INNER JOIN OUSR AS OU ON AC.UserSign2=OU.UserId
+WHERE AC.UpdateDate >= @FechaInicial AND AC.UpdateDate <= @FechaFinal
+ )
+UNION 
+(
+SELECT  
+OC.UpdateDate ,
+CASE OC.CardType WHEN 'S' THEN 'PROVEEDOR' WHEN 'C' THEN 'CLIENTE' ELSE '' END 'TIPO'
+,OC.CardCode  AS CodigoSN
+,OC.CardName  AS NombreSN
+,'ACTUALIZACIÓN' AS TipoOperación
+,OU.USER_CODE AS Codigo
+,OU.U_NAME AS Usuario
+,OC.CreateDate AS FechaCreacion
+FROM OCRD OC
+INNER JOIN OUSR AS OU ON OC.UserSign2=OU.UserId
+WHERE OC.UpdateDate >= @FechaInicial AND OC.UpdateDate <= @FechaFinal
+)
+UNION 
+(
+SELECT
+AC.CreateDate,
+CASE AC.CardType WHEN 'S' THEN 'PROVEEDOR' WHEN 'C' THEN 'CLIENTE' ELSE '' END 'TIPO'
+,AC.CardCode  AS CodigoSN
+,AC.CardName  AS NombreSN
+,'CREACIÓN' AS TipoOperación
+,OU.USER_CODE AS Codigo
+,OU.U_NAME AS Usuario
+,AC.CreateDate AS FechaCreacion
+ FROM OCRD AC
+INNER JOIN OUSR AS OU ON AC.UserSign=OU.UserId
+WHERE AC.CreateDate >= @FechaInicial AND AC.CreateDate <= @FechaFinal
+)
+ORDER BY 1,3
